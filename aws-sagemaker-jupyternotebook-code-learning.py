@@ -62,6 +62,11 @@ pipeline.fit(X_train, y_train)
 
 # Make predictions
 y_pred = pipeline.predict(X_test)
+
+y_true = data
+# Compute MSE ...to evaluate how well model predicts
+mse = mean_squared_error(y_true, y_pred)
+print(f"Mean Squared Error: {mse}")
 ############################
 ## Use XGBoost algorithm ##
 ############################
@@ -167,3 +172,6 @@ predictions = predictor.predict(test_data.values)
 
 # Print or use predictions as needed
 print(predictions)
+
+# Delete the endpoint when done
+predictor.delete_endpoint()
