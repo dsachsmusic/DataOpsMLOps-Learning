@@ -10,11 +10,11 @@ print(s3_input)
 # parameter for limiting data to process, so we don't spend to much during development
 nrows_to_read = 1000
 ############################
-## Use linear regression  ##
+## Use linear regression  ## note!!!!!!
 ############################
 
 import pandas as pd #pandas, for data manipulation, I think. 
-import scikit-learn #a.k.a scikit-learn - python library with lots of features....contains the functionality for  Logistic Regression, etc.
+import sklearn #a.k.a scikit-learn - python library with lots of features....contains the functionality for  Logistic Regression, etc.
 
 from sklearn.model_selection import train_test_split #functionality for splitting dataset into two subsets: one for training your model and one for testing it.
 from sklearn.linear_model import LinearRegression #this contains the functionality to train a model to predict based on correlation...it works to understand the data determine the most appropiate correlation coefficients for accurate prediction...line of best fit, etc (that stuff (?))
@@ -41,16 +41,21 @@ categorical_features = ['city', 'state', 'zip_code']
 numerical_features = ['bed', 'bath', 'acre_lot', 'house_size']
 
 # Preprocessing pipeline for numerical and categorical features
+# Note: handle_unknown=ignore makes it so any novel(?) categorical data values (values that were not present in the training data, are ignored, when this preprocessor is used)
 preprocessor = ColumnTransformer(
     transformers=[
-        ('num', StandardScaler(), numerical_features),
-        ('cat', OneHotEncoder(), categorical_features)
-    ])
+        ('num', StandardScaler(), numerical_features),    # Scale numerical features
+        ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features)     # One-hot encode categorical features.      
+        
+    ],
+    remainder='passthrough'  # Keep any remaining columns unchanged
+)
 
 # Define the model pipeline
 pipeline = Pipeline(steps=[
     ('preprocessor', preprocessor),
     ('model', LinearRegression())
+    
 ])
 
 from sklearn.model_selection import train_test_split
@@ -61,11 +66,33 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 pipeline.fit(X_train, y_train)
 
 # Make predictions
+
+X_test_encoded = preprocessor.transform(X_test) #for testing, encode the test data with onehot encoding - because that is how the data was when we trained the data
+#...but keep in mind, novel(?) values of categorical data will be ignored...because we used (handle_unknown='ignore) in the preprocessor...may be a better way to do it than this, but not sure
 y_pred = pipeline.predict(X_test)
 
-y_true = data
+# Selecting a single row as a DataFrame
+specific_row = X_test.loc[[803]]
+
+# Making predictions
+y_pred = pipeline.predict(specific_row)
+
+# Actual value from y_test
+actual_value = y_test.loc[803]
+
+# Make predictions on the entire test set
+y_pred = pipeline.predict(X_test)
+
+# Create a DataFrame to compare actual vs. predicted values
+comparison_df = pd.DataFrame({'Actual': y_test.values, 'Predicted': y_pred})
+
+# Display the comparison DataFrame
+print(comparison_df) 
+
+
 # Compute MSE ...to evaluate how well model predicts
-mse = mean_squared_error(y_true, y_pred)
+
+mse = mean_squared_error(y_test, y_pred)
 print(f"Mean Squared Error: {mse}")
 ############################
 ## Use XGBoost algorithm ##
@@ -90,7 +117,7 @@ role = get_execution_role()
 
 
 data = pd.read_csv(s3_input, nrows=nrows_to_read) #create/import(?) the dataframe in/with pandas
-
+data = data.dropna() #remove nulls
 
 # One-Hot Encoding
 data_encoded = pd.get_dummies(data, columns=['city', 'state', 'zip_code']) #this creates a column for each 
