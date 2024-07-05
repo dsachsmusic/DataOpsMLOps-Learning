@@ -95,7 +95,7 @@ print(comparison_df)
 mse = mean_squared_error(y_test, y_pred)
 print(f"Mean Squared Error: {mse}")
 ############################
-## Use XGBoost algorithm ##
+## Use XGBoost algorithm ##  ###not tested yet...also, might be costly.
 ############################
 
 #notes: 
